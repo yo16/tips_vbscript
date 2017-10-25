@@ -1,0 +1,16 @@
+<job>
+<script language = "VBScript" src = "01-01-30-呼ばれる人.vbs"></script>
+<script language = "VBScript">
+Option Explicit
+
+Dim aaa,modori
+
+modori = ireru(1)
+
+MsgBox "aaa > "&aaa,,"呼ぶ人１"
+MsgBox "戻り値 > "&modori,,"呼ぶ人１"
+
+
+</script>
+</job>
+

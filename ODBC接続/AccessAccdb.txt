@@ -1,0 +1,17 @@
+' ------------------------------------------------------------
+' DB接続
+' ------------------------------------------------------------
+Function ConnectToDb(dbPath)
+	Dim con
+	Set con = WScript.CreateObject("ADODB.Connection")
+	con.Open "Provider=Microsoft.ACE.OLEDB.12.0;Data Source=" & dbPath & ";Persist Security Info=False;"
+	
+	Set ConnectToDb = con
+End Function
+
+' ------------------------------------------------------------
+' DB切断
+' ------------------------------------------------------------
+Sub DisconnectToDb(con)
+	con.Close
+End Sub

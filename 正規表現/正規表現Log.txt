@@ -1,0 +1,11 @@
+String  : youichirou.ikeda@excel.co.jp
+Pattern : [^@]@.*
+a@excel.co.jp
+
+String  : youichirou.ikeda@excel.co.jp
+Pattern : aaa
+
+String  : youichirou.ikeda@excel.co.jp
+Pattern : [^@]*@[^.]*..*
+youichirou.ikeda@excel.co.jp
+

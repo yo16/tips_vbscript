@@ -1,0 +1,3 @@
+cscript メッセージってどうなる？.vbs
+
+pause

@@ -1,0 +1,10 @@
+1Option Explicit
+2
+3Dim objFS
+4
+5' FileSystemObject オブジェクトを生成する
+6Set objFS = WScript.CreateObject("Scripting.FileSystemObject")
+7
+8' ファイルが存在するかどうかを表示する
+9WScript.Echo objFS.FileExists("c:\boot.ini")
+10

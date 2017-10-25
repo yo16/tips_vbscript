@@ -1,0 +1,7 @@
+ドライブ・フォルダ
+	a
+		abc
+		b
+			bのabc
+		c
+	rename_B

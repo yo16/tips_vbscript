@@ -1,0 +1,644 @@
+Option Explicit
+
+
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+'関数 sqlExec
+' 引数			procName:実行するProcedure名
+' 戻り値		正常終了:0
+'			異常終了:-1
+'
+'＊＊説明＊＊
+' SPを実行
+'
+'＊＊アルゴリズム＊＊
+'	SPを実行(executePackage)
+'		SQL実行オブジェクト&ファイルを作成
+'		実行ファイルへ実行内容を書く
+'		SQL*Plusを実行(@実行ファイル)
+'	SPが直接出力するログを取得(echoSvrLogMsg)
+'		スプールオブジェクト&ファイルを作成
+'		スプールファイルを開き、ログ内容を取得
+'	戻り値を取得(getReturnValue)
+'		スプールオブジェクト&ファイルを作成
+'		スプールファイルを開き、実行結果を取得
+'	ログを取得(echoLogMsg)
+'		SQLファイル作成
+'		SQL実行
+'		スプールファイルを開き、ログ内容を取得
+'	一時的に使用したファイルを削除(deleteTmpFile)
+'		SQLファイルを削除
+'		スプールファイルを削除
+'
+'2001/01/11 ikeda 作成
+'2001/02/01 ikeda 環境変数を使用しない
+'2001/02/06 ikeda Oracleに接続するときに、DBHOSTを使用する
+'2001/02/06 ikeda Oracleに接続するときに、DBHOSTを使用しない
+'2001/02/08 ikeda SPが直接出力するログをログファイルへ出力する(echoSvrLogMsg追加)
+'2001/02/08 ikeda 実行ファイル名、Spoolファイル名に時刻をつける
+'2001/02/16 ikeda SP内での処理失敗のときに、sqlExecがエラーを返す処理を追加
+'''''''''''''''''''''''''''''''''''''''''''''''''''''''''
+Function sqlExec(procName)
+	On Error Resume Next
+
+	'----	sqlExecの開始
+	WScript.Echo "sqlExec("&procName&") Start " & Now
+
+
+	'----	実行時の第一引数を出力ファイルとする(SQLファイル・スプールファイルの設定)
+	Dim tmpFileName,JobID
+
+	Dim nameArray
+	nameArray = Split(WScript.ScriptName,".")
+	JobID = nameArray(0)
+	If ( Err or (JobID = "") ) Then
+		WScript.Echo "sqlExec:JobIDの取得に失敗しました。 " & Now
+		sqlExec = -1
+		Exit Function
+	End If
+
+	tmpFileName = TMPDIR
+	tmpFileName = tmpFileName & JobID & "_" & makeTimeStamp(Now)
+	If (debugFlg = 1) Then tmpFileName = JobID & "_" & makeTimeStamp(Now)
+
+
+	'----	SPを実行
+	If (executePackage(tmpFileName,procName) = -1) Then
+		WScript.Echo "sqlExec:executePackage が異常終了しました。 " & Now
+		sqlExec = -1
+		Exit Function
+	End If
+
+
+	'----	SPがサーバに出力しているログをechoで出力する
+	If (echoSvrLogMsg(tmpFileName) = -1) Then
+		WScript.Echo "sqlExec:echoSvrLogMsg が異常終了しました。 " & Now
+		sqlExec = -1
+		Exit Function
+	End If
+
+
+	'----	SPの戻り値を取得
+	Dim logID
+	If (getReturnValue((tmpFileName),logID) = -1) Then
+		WScript.Echo "sqlExec:getReturnValue が異常終了しました。 " & Now
+		sqlExec = -1
+		Exit Function
+	End If
+
+
+	'----	ログメッセージを取得
+	If (echoLogMsg(tmpFileName,logID) = -1) Then
+		WScript.Echo "sqlExec:echoLogMsg が異常終了しました。 " & Now
+		sqlExec = -1
+		Exit Function
+	End If
+
+
+	'----	SP内での実行に失敗した場合に、処理を中断して-1を返す
+	If (logID < 0) Then
+		WScript.Echo "sqlExec:SPが正常に実行できませんでした。 " & Now
+		sqlExec = -1
+		Exit Function
+	End If
+
+
+	'----	一時ファイルを削除
+	If (deleteTmpFile(tmpFileName) = -1) Then
+		WScript.Echo "sqlExec:deleteTmpFile が異常終了しました。 " & Now
+		sqlExec = -1
+		Exit Function
+	End If
+
+
+	'----	sqlExecの終了
+	WScript.Echo "sqlExec End " & Now
+
+
+	'----	sqlExecの戻り値
+	sqlExec = 0
+End Function
+
+
+
+''''''''''''''''''''''''''''''''''''''''''''
+'関数 executePackage
+' 引数			P_tmpFileName:実行ファイル名・スプールファイル名のベース
+'			P_PackageName:実行するパッケージ
+' 戻り値		正常終了:0
+'			異常終了:-1
+'
+'＊＊説明＊＊
+'・sqlExecの内部関数(1)
+'・SQL*Plusを使用して、Packageを実行する
+'
+'2001/01/11 ikeda 作成
+'2001/02/01 ikeda 環境変数を使用しないように修正
+'2001/02/08 ikeda SPが直接出力するログをSPOOLするように修正
+''''''''''''''''''''''''''''''''''''''''''''
+Function executePackage(P_tmpFileName,P_PackageName)
+	On Error Resume Next
+
+	Dim WshShell
+	Set WshShell = WScript.CreateObject ("WScript.Shell")
+
+	If (debugFlg = 1) Then WScript.Echo "sqlExec:executePackage Start " & Now
+
+
+	'----	SQL実行オブジェクト&ファイル作成
+	Dim sqlFileObject
+	Set sqlFileObject = WScript.CreateObject("Scripting.FileSystemObject")
+	Dim sqlFile
+	Set sqlFile = sqlFileObject.CreateTextFile(P_tmpFileName & "Execute.sql",True)
+	If Err Then
+		WScript.Echo "sqlExec:executePackage:実行用SQLファイルの作成に失敗しました。 " & Now
+		executePackage = -1
+		Exit Function
+	End If
+
+	'----	実行ファイルへ実行内容を書く
+	sqlFile.WriteLine ("WHENEVER OSERROR  EXIT FAILURE")
+	sqlFile.WriteLine ("WHENEVER SQLERROR EXIT FAILURE")
+	sqlFile.WriteLine ("SET	TERM OFF")
+	sqlFile.WriteLine ("SET	NEWPAGE		0")
+	sqlFile.WriteLine ("SET	SPACE		0")
+	sqlFile.WriteLine ("SET	LINESIZE	500")
+	sqlFile.WriteLine ("SET	PAGESIZE	0")
+	sqlFile.WriteLine ("SET	ECHO OFF")
+	sqlFile.WriteLine ("SET	FEEDBACK OFF")
+	sqlFile.WriteLine ("SET	HEADING OFF")
+	sqlFile.WriteLine ("SET SERVEROUTPUT ON")
+
+
+	sqlFile.WriteLine "VARIABLE rtnCode NUMBER"
+	sqlFile.WriteLine "SPOOL " & P_tmpFileName & "SvrLog.dat"
+	sqlFile.WriteLine "EXECUTE :rtnCode := " & P_PackageName & ";"
+	sqlFile.WriteLine "SPOOL OFF"
+	sqlFile.WriteLine "SPOOL " & P_tmpFileName & "Spool.dat"
+	sqlFile.WriteLine "PRINT rtnCode"
+	sqlFile.WriteLine "SPOOL OFF"
+	sqlFile.WriteLine "EXIT"
+
+	sqlFile.Close
+
+	If Err Then
+		WScript.Echo "sqlExec:executePackage:実行用SQLファイルの書き込みに失敗しました。 " & Now
+		executePackage = -1
+		Exit Function
+	End If
+
+
+
+	'----	ログイン情報を取得
+	Dim DBUser,DBPassword,DBHostStr,P_OracleHomePath
+	DBUser = DBUSR
+	DBPassword = DBPWD
+	DBHostStr = DBHOST
+	P_OracleHomePath = OracleHomePath
+	If ((DBUser = "") or _ 
+	    (DBPassword = "") or _
+	    (P_OracleHomePath = "")) Then
+		If (DBUser = "") Then
+			WScript.Echo "環境変数[DBUSR]の取得に失敗しました。 " & Now
+		End If
+		If (DBPassword = "") Then
+			WScript.Echo "環境変数[DBPWD]の取得に失敗しました。 " & Now
+		End If
+		If (DBHostStr = "") Then
+			WScript.Echo "環境変数[DBHOST]の取得に失敗しました。 " & Now
+		End If
+		If (P_OracleHomePath = "") Then
+			WScript.Echo "環境変数[OracleHomePath]の取得に失敗しました。 " & Now
+		End If
+		executePackage = -1
+		Exit Function
+	End If
+	'----	エラー処理
+	If Err Then
+		WScript.Echo "sqlExec:executePackage:環境変数の取得に失敗しました。 " & Now
+		executePackage = -1
+		Exit Function
+	End If
+
+
+
+	'----	ログイン情報を作成
+	Dim loginInfo
+	loginInfo = DBUser & "/" & DBPassword
+	If (debugFlg = 1) Then loginInfo = DBUser & "/" & DBPassword & "@IYAKU.WORLD"
+
+
+	'実行ファイルの存在チェック
+	Dim objFS
+	Set objFS = WScript.CreateObject("Scripting.FileSystemObject")
+	If Not (objFS.FileExists(P_tmpFileName&"Execute.sql")) Then
+		WScript.Echo "sqlRun:スクリプトファイル["&P_tmpFileName&"Execute.sql]が存在しません。" & Now
+		executePackage = -1
+		Exit Function
+	End If
+
+
+	'----	開始時刻を出力
+	WScript.Echo "sqlExec:executePackage:Package Start " & Now
+
+
+	'----	ファイル実行
+	Dim runCode
+	runCode = P_OracleHomePath&"\bin\sqlplus.exe "&loginInfo&" @"&P_tmpFileName&"Execute.sql"
+	WScript.Echo "sqlExec:INF : "&runCode
+	Dim runReturnCode
+	runReturnCode = WshShell.Run(runCode,0,1)
+	'----	エラー処理
+	If ( (runReturnCode <> 0) or Err) Then
+		WScript.Echo "sqlExec:executePackage:SQL*Plusでの実行に失敗しました。 " & Now
+		executePackage = -1
+		Exit Function
+	End If
+
+
+	'----	終了時刻出力
+	WScript.Echo "sqlExec:executePackage:Package End " & Now
+
+
+	If (debugFlg = 1) Then WScript.Echo "sqlExec:executePackage End " & Now
+	executePackage = 0
+
+End Function
+
+
+
+
+''''''''''''''''''''''''''''''''''''''''''''
+'関数 echoSvrLogMsg
+' 引数      P_tmpFileName:スプールファイル名のベース
+'              スプールファイル名 : P_tmpFileName & "SvrLog.dat"
+' 戻り値    正常終了:0
+'           異常終了:-1
+'
+'＊＊説明＊＊
+'・sqlExecの内部関数(5)
+'・executePackageの実行時にサーバに出力したログをSPOOLしてある。
+'  そのファイルを開き、ログを出力する。
+'
+'2001/02/08 ikeda
+''''''''''''''''''''''''''''''''''''''''''''
+Function echoSvrLogMsg(P_tmpFileName)
+	On Error Resume Next
+
+	Const forReading = 1
+
+	If (debugFlg = 1) Then WScript.Echo "sqlExec:echoSvrLogMsg Start " & Now
+
+	'----	スプールファイルを開く
+	Dim spoolFileObject
+	Set spoolFileObject = WScript.CreateObject("Scripting.FileSystemObject")
+	Dim spoolFile
+	Set spoolFile = spoolFileObject.OpenTextFile(P_tmpFileName&"SvrLog.dat",forReading)
+	'----	エラー処理
+	If Err Then
+		WScript.Echo "sqlExec:echoSvrLogMsg:ファイル[" & P_tmpFileName & "SvrLog.dat]のオープンに失敗しました。 " & Now
+		echoSvrLogMsg = -1
+		Exit Function
+	End If
+
+	'----	ファイルを読み込みechoで出力する
+	Dim spoolLine
+	Do Until spoolFile.AtEndOfStream
+		spoolLine = Trim(spoolFile.Readline)
+		If Not(spoolLine = "") Then
+			WScript.Echo spoolLine
+		End If
+	Loop
+	spoolFile.Close
+	'----	エラー処理
+	If Err Then
+		WScript.Echo "sqlExec:echoSvrLogMsg:ファイル[" & P_tmpFileName & "SvrLog.dat]の読み込みに失敗しました。 " & Now
+		echoSvrLogMsg = -1
+		Exit Function
+	End If
+
+
+	If (debugFlg = 1) Then WScript.Echo "sqlExec:echoSvrLogMsg End " & Now
+
+	echoSvrLogMsg = 0
+
+
+End Function
+
+
+
+
+
+
+
+''''''''''''''''''''''''''''''''''''''''''''
+'関数 getReturnValue
+' 引数			P_tmpFileName:実行ファイル名・スプールファイル名のベース
+'			P_returnValue:パッケージを実行した結果を戻すための変数(アドレス渡し)
+' 戻り値		正常終了:0
+'			異常終了:-1
+'
+'＊＊説明＊＊
+'・sqlExecの内部関数(2)
+'・executePackageの実行時に出力したSPOOLファイルを開き
+'  戻り値を取得する
+'・SPOOLファイルを読み取得した戻り値は、
+'  引数をアドレス渡しにすることによって
+'  呼び出し元で取得する事ができる
+'
+'2001/01/11 ikeda
+''''''''''''''''''''''''''''''''''''''''''''
+Function getReturnValue(byRef P_tmpFileName,P_returnValue)
+	On Error Resume Next
+
+	Const forReading = 1
+
+	If (debugFlg = 1) Then WScript.Echo "sqlExec:getReturnValue Start " & Now
+
+	'----	StoredProcedureの戻り値を取得する
+	Dim spoolFileObject
+	Set spoolFileObject = WScript.CreateObject("Scripting.FileSystemObject")
+	Dim spoolFile
+	Set spoolFile = spoolFileObject.OpenTextFile(P_tmpFileName&"Spool.dat",forReading)
+	'----	エラー処理
+	If Err Then
+		WScript.Echo "sqlExec:getReturnValue:ファイル[" & P_tmpFileName & "Spool.dat]のオープンに失敗しました。 " & Now
+		getReturnValue = -1
+		Exit Function
+	End If
+
+	P_ReturnValue = Trim(spoolFile.Readline)
+	spoolFile.Close
+	'----	エラー処理
+	If Err Then
+		WScript.Echo "sqlExec:getReturnValue:ファイル[" & P_tmpFileName & "Spool.dat]の読み込みに失敗しました。 " & Now
+		getReturnValue = -1
+		Exit Function
+	End If
+
+	If (debugFlg = 1) Then WScript.Echo "sqlExec:getReturnValue End " & Now
+
+	getReturnValue = 0
+
+End Function
+
+
+
+
+''''''''''''''''''''''''''''''''''''''''''''
+'関数 echoLogMsg
+' 引数			P_tmpFileName:実行ファイル名・スプールファイル名のベース(フルパス)
+'			P_logNo:ログ番号[SCMAPLOG.LOG_NO]
+' 戻り値		正常終了:0
+'			異常終了:-1
+'
+'＊＊説明＊＊
+'・sqlExecの内部関数(3)
+'・SQL*Plusを使用して、
+'  テーブル[SCMAPLOG]からログの内容(SCMAPLOG.MSG)を取得し、
+'  取得後テーブルから削除する
+'・取得したログの内容をechoで出力する
+'
+'2001/01/11 ikeda 作成
+'2001/02/01 ikeda 環境変数を使用しないように修正
+'                 デバッグ用コードを追加
+''''''''''''''''''''''''''''''''''''''''''''
+Function echoLogMsg(P_tmpFileName,P_LogNo)
+	On Error Resume Next
+
+	Const forReading = 1
+
+	If (debugFlg = 1) Then WScript.Echo "sqlExec:echoLogMsg Start " & Now
+
+
+	'----	P_LogNoが渡っていない場合のエラー処理
+	If (P_LogNo = "") Then
+		WScript.Echo "sqlExec:echoLogMsg:Error ログ番号を受け取っていません。"
+		echoLogMsg = -1
+		Exit Function
+	End If
+
+
+	Dim WshShell
+	Set WshShell = WScript.CreateObject ("WScript.Shell")
+
+	'----	ログオン情報を取得
+	Dim DBUser,DBPassword,DBHostStr,P_OracleHomePath
+	DBUser = DBUSR
+	DBPassword = DBPWD
+	DBHostStr = DBHOST
+	P_OracleHomePath = OracleHomePath
+	If ((DBUser = "") or _ 
+	    (DBPassword = "") or _
+	    (P_OracleHomePath = "")) Then
+		If (DBUser = "") Then
+			WScript.Echo "sqlExec:echoLogMsg:環境変数[DBUSR]の取得に失敗しました。 " & Now
+		End If
+		If (DBPassword = "") Then
+			WScript.Echo "sqlExec:echoLogMsg:環境変数[DBPWD]の取得に失敗しました。 " & Now
+		End If
+		If (DBHostSTr = "") Then
+			WScript.Echo "sqlExec:echoLogMsg:環境変数[DBHOST]の取得に失敗しました。 " & Now
+		End If
+		If (P_OracleHomePath = "") Then
+			WScript.Echo "sqlExec:echoLogMsg:環境変数[OracleHomePath]の取得に失敗しました。 " & Now
+		End If
+		echoLogMsg = -1
+		Exit Function
+	End If
+	'----	エラー処理
+	If Err Then
+		WScript.Echo "sqlExec:echoLogMsg:環境変数の取得に失敗しました。 " & Now
+		echoLogMsg = -1
+		Exit Function
+	End If
+
+
+	'----	SQL実行オブジェクト&ファイル作成
+	Dim sqlFileObject
+	Set sqlFileObject = WScript.CreateObject("Scripting.FileSystemObject")
+	Dim sqlFile
+	Set sqlFile = sqlFileObject.CreateTextFile(P_tmpFileName&"Execute.sql",True)
+	'----	エラー処理
+	If Err Then
+		WScript.Echo "sqlExec:echoLogMsg:ファイル[" & P_tmpFileName & "Execute.sql]の作成に失敗しました。 " & Now
+		echoLogMsg = -1
+		Exit Function
+	End If
+
+
+	'----	SPが失敗した場合(負だった場合)に正に戻す処理(SCMApLog.Log_Noが正のため)
+	Dim logID
+	logID = CInt(P_LogNo)
+	If (logID < 0) then
+		logID = logID * (-1)
+	End If
+
+
+	'----	実行ファイルへ実行内容を書く
+	sqlFile.WriteLine ("WHENEVER OSERROR  EXIT FAILURE")
+	sqlFile.WriteLine ("WHENEVER SQLERROR EXIT FAILURE")
+	sqlFile.WriteLine ("SET	TERM OFF")
+	sqlFile.WriteLine ("SET	NEWPAGE		0")
+	sqlFile.WriteLine ("SET	SPACE		0")
+	sqlFile.WriteLine ("SET	LINESIZE	500")
+	sqlFile.WriteLine ("SET	PAGESIZE	0")
+	sqlFile.WriteLine ("SET	ECHO OFF")
+	sqlFile.WriteLine ("SET	FEEDBACK OFF")
+	sqlFile.WriteLine ("SET	HEADING OFF")
+
+	sqlFile.WriteLine  "SPOOL " & P_tmpFileName & "Spool.dat"
+	sqlFile.WriteLine  "SELECT MSG  FROM SCMAPLOG WHERE LOG_NO = " & logID & " ORDER BY TIME, SEQ_NO;"
+	sqlFile.WriteLine  "SPOOL OFF"
+	sqlFile.WriteLine  "DELETE FROM SCMAPLOG WHERE LOG_NO = " & logID & ";"
+	sqlFile.WriteLine  "EXIT"
+
+	sqlFile.Close
+
+	'----	エラー処理
+	If Err Then
+		WScript.Echo "sqlExec:echoLogMsg:ファイル[" & P_tmpFileName & "Execute.sql]の書き込みに失敗しました。 " & Now
+		echoLogMsg = -1
+		Exit Function
+	End If
+
+
+	'----	ログイン情報を作成
+	Dim loginInfo
+	loginInfo = DBUser & "/" & DBPassword
+	If (debugFlg = 1) Then loginInfo = DBUser & "/" & DBPassword & "@IYAKU.WORLD"
+
+
+	'実行ファイルの存在チェック
+	Dim objFS
+	Set objFS = WScript.CreateObject("Scripting.FileSystemObject")
+	If Not (objFS.FileExists(P_tmpFileName&"Execute.sql")) Then
+		WScript.Echo "sqlRun:スクリプトファイル["&P_tmpFileName&"Execute.sql]が存在しません。" & Now
+		executePackage = -1
+		Exit Function
+	End If
+
+
+	'----	開始時刻を出力
+	If (debugFlg = 1) Then WScript.Echo "sqlExec:echoLogMsg:ログ取得 Start " & Now
+
+
+	'----	ファイル実行		******* SQL*Plus実行 *******
+	Dim runReturnCode
+	runReturnCode =  WshShell.Run(P_OracleHomePath&"\bin\sqlplus.exe -S "&loginInfo&" @"&P_tmpFileName&"Execute.sql",0,1)
+	'----	エラー処理
+	If ( (runReturnCode <> 0) or Err ) Then
+		WScript.Echo "sqlExec:echoLogMsg:SQL*Plusの実行に失敗しました。 " & Now
+		echoLogMsg = -1
+		Exit Function
+	End If
+
+
+	'----	終了時刻を出力
+	If (debugFlg = 1) Then WScript.Echo "sqlExec:echoLogMsg:ログ取得 End " & Now
+
+
+
+	'----	SPの戻り値をスプールファイルから取得し、Echoで出力する
+	Dim spoolFileObject
+	Set spoolFileObject = WScript.CreateObject("Scripting.FileSystemObject")
+	Dim spoolFile,spoolLine
+	Set spoolFile = spoolFileObject.OpenTextFile(P_tmpFileName&"Spool.dat",forReading)
+	'----	エラー処理
+	If Err Then
+		WScript.Echo "sqlExec:echoLogMsg:ファイル[" & P_tmpFileName & "Spool.dat]の作成に失敗しました。 " & Now
+		echoLogMsg = -1
+		Exit Function
+	End If
+	Do Until spoolFile.AtEndOfStream
+		spoolLine = Trim(spoolFile.Readline)
+		If Not(spoolLine = "") Then
+			WScript.Echo spoolLine
+		End If
+	Loop
+	spoolFile.Close
+	'----	エラー処理
+	If Err Then
+		WScript.Echo "sqlExec:echoLogMsg:ファイル[" & P_tmpFileName & "Spool.dat]の読み込みに失敗しました。 " & Now
+		echoLogMsg = -1
+		Exit Function
+	End If
+
+
+
+	If (debugFlg = 1) Then WScript.Echo "sqlExec:echoLogMsg End " & Now
+
+
+	'----	関数の戻り値を設定
+	echoLogMsg = 0
+
+
+End Function
+
+
+
+
+
+''''''''''''''''''''''''''''''''''''''''''''
+'関数 deleteTmpFile
+' 引数			P_tmpFileName:実行ファイル名・スプールファイル名のベース(フルパス)
+' 戻り値		正常終了:0
+'			異常終了:-1
+'
+'＊＊説明＊＊
+'・sqlExecの内部関数(4)
+'・sqlExecで使用した一時ファイルを削除する
+'
+'2001/01/11 ikeda
+''''''''''''''''''''''''''''''''''''''''''''
+Function deleteTmpFile(P_tmpFileName)
+	On Error Resume Next
+
+	If (debugFlg = 1) Then WScript.Echo "sqlExec:deleteTmpFile Start " & Now
+
+	Dim objTmpFile
+	Set objTmpFile = WScript.CreateObject("Scripting.FileSystemObject")
+
+	'----	ファイルを削除
+	objTmpFile.DeleteFile P_tmpFileName&"Execute.sql"
+	objTmpFile.DeleteFile P_tmpFileName&"Spool.dat"
+	objTmpFile.DeleteFile P_tmpFileName&"SvrLog.dat"
+
+	'----	エラー処理
+	If Err Then
+		WScript.Echo "sqlExec:echoLogMsg:ファイルを削除できませんでした。 " & Now
+		deleteTmpFile = -1
+	Else
+		deleteTmpFile = 0
+	End If
+
+	If (debugFlg = 1) Then WScript.Echo "sqlExec:deleteTmpFile End " & Now
+
+End Function
+
+
+
+
+'----------------------------------------------------------------'
+' 時間(date型)を受け取り「YYYYMMDDHHMMSS」の文字列にして返す関数 '
+'----------------------------------------------------------------'
+Function makeTimeStamp (p_time)
+	Dim rtnTimeStamp
+	Dim tmpYear,tmpMonth,tmpDay,tmpHour,tmpMinute,tmpSecond
+    tmpYear = Year(p_time)
+	tmpMonth = Month(p_time)
+	tmpDay = Day(p_time)
+	tmpHour = Hour(p_time)
+	tmpMinute = Minute(p_time)
+	tmpSecond = Second(p_time)
+
+	If tmpMonth < 10	Then tmpMonth = "0" & tmpMonth
+	If tmpDay < 10		Then tmpDay = "0" & tmpDay
+	If tmpHour < 10		Then tmpHour = "0" & tmpHour
+	If tmpMinute < 10	Then tmpMinute = "0" & tmpMinute
+	If tmpSecond < 10	Then tmpSecond = "0" & tmpSecond
+
+	rtnTimeStamp = tmpYear & tmpMonth & tmpDay & tmpHour & tmpMinute & tmpSecond
+	makeTimeStamp = rtnTimeStamp
+End Function
+
+

@@ -1,0 +1,14 @@
+'--main--
+<job id="test">
+	<script language="vbscript" src="script1.vbs"></script>
+	<script language="vbscript" src="script2.vbs"></script>
+	<script language="vbscript">
+		'Msgbox procname1(3,4)
+		MsgBox procname2(4,5)
+		dim ret
+		ret = procname1(3,4)
+		msgbox ret,,"“š‚¦"
+		ret = -2
+		Wscript.Quit ret
+	</script> 
+</job>

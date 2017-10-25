@@ -1,0 +1,70 @@
+2015/1/10 y.ikeda
+
+VBScriptからADODB.Connectionを利用することはできないが、wsfなら参照できる。
+referenceタグで定義しておくと、CreateObjectで指示できる。<reference object="ADODB.Connection" />
+参考：https://gallery.technet.microsoft.com/scriptcenter/12987a4a-5a7e-481e-a455-21ce1753eac2
+objectタグで定義しておくとSetしなくてすむけど、変数定義をプログラムの外でするようで気持ち悪いので、自分はやらない。
+
+
+Windows7 64bit版でADOを使うときの、プロバイダーとエンジンは、
+	Provider=Microsoft.ACE.OLEDB.12.0;
+	Jet OLEDB:Engine Type=6;
+で、指定する。（Win7はたぶんあまり関係なく、32か64かの方が重要）
+Type=6は、ACCESS 2007からの「*.accdb」を意味する。Type=5は「*.mdb」。
+
+
+
+
+【重要】okな接続文字列
+win7-64bitで、*.mdb
+dbCon.Open "driver={Microsoft Access Driver (*.mdb)};DBQ=test.mdb;"
+win7-64bitで、*.accdb（ヤマハ端末のみＯＫ、ノートPCでＮＧ）
+dbCon.Open "Provider=Microsoft.ACE.OLEDB.12.0;Jet OLEDB:Engine Type=6;Data Source=test2.accdb;"
+
+
+
+
+64bitOSでwsfをダブルクリックで起動すると、wscript.exeの64bit版が動くけど、
+Provider「Microsoft.ACE.OLEDB.12.0」は、通常32bit版しか提供されていないので、
+「プロバイダーが見つかりません。正しくインストールされていない可能性があります。」と出る。
+32bit版のwscript.exeかcscript.exeを起動する必要がある。
+32bit版は、下記にある。
+	C:\Windows\SysWOW64\cscript.exe
+	C:\Windows\SysWOW64\wscript.exe
+再配布可能な64bit用Providerプログラムは、リリースされている模様。
+でも会社PCにインストールしたくないので、今回は32bit版で回避した。
+
+
+
+
+cscriptとwscriptはどっちでも動作は変わらないけど、
+エラーが起きたときのメッセージが、
+	cscript ⇒ 標準出力
+	wscript ⇒ メッセージボックス
+という違いがある。（他にもあるかもしれない）
+何が起きているのかわからないときとか、試行錯誤するときは、
+wscriptを使った方が楽。
+
+
+
+
+wsfからvbsを参照で呼び出すことができる。
+<script language="VBScript" scr="xxx.vbs" />
+
+
+
+
+32bit版のODBCデータソース アドミニストレーター
+C:\Windows\SysWOW64\odbcad32.exe
+
+
+
+Microsoft Access データベース エンジン 2010 再頒布可能コンポーネント
+https://www.microsoft.com/ja-jp/download/details.aspx?id=13255
+ノートＰＣでどうしてもできないので、
+とうとう導入してみる。
+
+
+2016/2/6 きた！
+これの32bit版をインストールすれば、使える。
+ブラウザは32bit版を使ってるみたいだ。

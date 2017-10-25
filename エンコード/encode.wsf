@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<package>
+<comment>
+Encodes a VBS or JS script file with a script file!
+
+For more scripts, visit www.wshscripting.com
+</comment>
+<job id="Encode">
+<reference id="FileSystemObject" guid="{420B2830-E718-11CF-893D-00A0C9054228}" version="1.0"/>
+<object id="Encoder" progid="Scripting.Encoder" events="false"/>
+<script id="Encode" language="VBScript">
+<![CDATA[
+
+Option Explicit
+
+Dim fso
+Set fso = WScript.CreateObject("Scripting.FilesystemObject")
+
+Dim argv
+Set argv = WScript.Arguments
+
+Dim SourcePath
+SourcePath = argv(0)
+If SourcePath = "" Then WScript.Quit
+
+Dim szExt, bstrScript, destExt
+Select Case fso.GetExtensionName(SourcePath)
+	Case "vbs"
+		szExt = ".vbs"
+		bstrScript = "VBScript"
+		destExt = ".vbe"
+	Case "js"
+		szExt = ".js"
+		bstrScript = "JScript"
+		destExt = ".jse"
+	Case Else
+		MsgBox fso.GetExtensionName(SourcePath) & " files not supported in this script."
+		WScript.Quit
+End Select
+
+Dim bstrStreamIn
+bstrStreamIn = fso.OpenTextFile(SourcePath, 1).ReadAll
+
+Dim enc, EncodedText
+Set enc = WScript.CreateObject("Scripting.Encoder")
+EncodedText = enc.EncodeScriptFile(szExt, bstrStreamIn, 0, bstrScript)
+Set enc = Nothing
+
+Dim DestPath
+DestPath = Replace(SourcePath, szExt, destExt)
+If Not fso.FileExists(DestPath) Then
+  Dim DestFile
+  Set DestFile = fso.OpenTextFile(DestPath, 2, true)
+  DestFile.Write Left(EncodedText, Len(EncodedText) - 1)
+  DestFile.Close
+  Set DestFile = Nothing
+End If
+
+Set fso = Nothing
+
+]]>
+</script>
+</job>
+</package>

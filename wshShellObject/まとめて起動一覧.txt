@@ -1,0 +1,2 @@
+P:\VBS\練習ソース\wshShellオブジェクト\Runメソッド.vbs
+P:\VBS\練習ソース\wshShellオブジェクト\Runメソッド.vbs

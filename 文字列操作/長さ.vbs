@@ -1,0 +1,2 @@
+
+msgbox len("test")

@@ -1,0 +1,11 @@
+<job>
+<script language = "VBScript" src = "includeFile.vbs"></script>
+<script language = "VBScript">
+Option Explicit
+
+msgbox aaa,,"test.wsf"
+
+
+</script>
+</job>
+

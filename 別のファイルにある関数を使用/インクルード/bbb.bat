@@ -1,0 +1,1 @@
+cscript aaa.wsf

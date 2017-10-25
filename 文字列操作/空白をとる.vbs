@@ -1,0 +1,2 @@
+msgbox """"&trim("aaa  aaa  ")&""""
+

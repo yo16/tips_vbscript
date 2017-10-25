@@ -1,0 +1,4 @@
+C:\900_Programming\VBScript\source\練習ソース\ドライブ・フォルダ\a
+C:\900_Programming\VBScript\source\練習ソース\ドライブ・フォルダ\a\abc
+C:\900_Programming\VBScript\source\練習ソース\ドライブ・フォルダ\a\b\bのabc
+C:\900_Programming\VBScript\source\練習ソース\ドライブ・フォルダ\rename_A

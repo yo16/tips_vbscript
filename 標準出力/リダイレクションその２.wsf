@@ -1,0 +1,22 @@
+<JOB id="RedirectionPrac">
+<SCRIPT language="VBScript">
+
+Option Explicit
+
+MsgBox "リダイレクションその２開始!"
+WScript.Echo "リダイレクションその２ =開始="
+
+Dim objWshShell
+Set objWshShell = WScript.CreateObject("WScript.Shell")
+Dim modori
+'modori = objWshShell.Run("cscript D:\WSH\練習ソース\標準出力\リダイレクションその３.wsf >> "&WScript.Arguments(0),0,1)
+
+
+WScript.Echo "リダイレクションその２ =終了="
+MsgBox "リダイレクションその２終了!"
+
+</SCRIPT>
+</JOB>
+
+
+

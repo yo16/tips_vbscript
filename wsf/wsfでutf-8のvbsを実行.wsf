@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<package>
+	<job>
+		<script language="VBScript" src="test_utf8.vbs"></script>
+		<script language="VBScript">
+		Option Explicit
+		
+		MsgBox "aa"
+		RunTestUtf8
+		</script>
+	</job>
+</package>

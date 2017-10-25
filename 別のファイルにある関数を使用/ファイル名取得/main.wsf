@@ -1,0 +1,13 @@
+<job id = "aa">
+<script language = "vbscript" src = "読み込むファイル.vbs"></script>
+<script language = "vbscript">
+
+yomikomare()
+
+msgbox WScript.ScriptName,,"メインにて。"
+
+</script>
+</job>
+
+
+

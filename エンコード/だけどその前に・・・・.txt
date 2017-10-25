@@ -1,0 +1,7 @@
+なんか、ScriptEncorderっていうのが必要らしい。
+
+しかも悪用されたかなんかで、
+Microsoftが配布してないっぽい。
+Microsoft内をEncorderで検索しても出てこない。
+
+ぶー

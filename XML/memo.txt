@@ -1,0 +1,52 @@
+表2：DOMDocumentオブジェクトの主なメソッド 
+
+
+abort* 非同期のダウンロードを中止 ★ 
+appendChild ノードの最後に新しい子ノードを追加   
+createAttribute 新しい属性を作成   
+createComment コメントノードを作成   
+createElement 要素ノードを作成   
+createNode* 型と名前空間を指定してノードを作成 ★ 
+createTextNode テキストノードを作成   
+getElementsByTagName 指定された名前を持つ要素の集合を戻す   
+load ファイル指定してXML文書をオブジェクトに読み込む ★ 
+loadXML 文字列を指定してXML文書をオブジェクトに読み込む ★ 
+removeChild 子ノードを削除   
+replaceChild 子ノードを置換   
+save 保持しているXML文書を書き出す ★ 
+selectNodes 指定したパターンに適合するノードのリストを返す ★ 
+transformNode* 指定したスタイルシートを使ってXML文書を表示形式のテキストに変換 ★ 
+transformNodeToObject 指定したスタイルシートを使ってXML文書を表示形式オブジェクトに変換 ★ 
+
+
+★マークは独自に拡張されたもの
+
+
+
+
+表1：DOMDocumentオブジェクトの主なプロパティ 
+
+
+documentElement XML文書のルート要素   
+async 非同期読み込み。規定値はTrue ★ 
+item 直下の要素の集合。０から始まるインデックスによって要素を指定する   
+text 要素の保持するテキストデータ ★ 
+namespaceURI 名前空間のURI ★ 
+definition DTDまたはスキーマによるノードの定義 ★ 
+nodeName ノード名   
+nodeType ノードの型を示すコード（要素=1、属性=2、テキスト=3）   
+nodeTypeString ノードの型名 ★ 
+attributes ノードの属性   
+dataType ノードのデータ型 ★ 
+nodeValue ノードの値   
+parentNode 存在すれば親のノード、なければnull   
+childNodes 子ノードの集合   
+firstChild 最初の子ノード   
+lastChild 最後の子ノード   
+previousSibling 現在のノードの直前のノード   
+nextattrbutesSibling 現在のノードの直後のノード   
+parsed 構造が解析済みかどうか ★ 
+parseError 構造解析時のエラー情報（IXMLDOMParseErrorオブジェクト） ★ 
+
+
+★マークは独自に拡張されたもの

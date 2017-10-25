@@ -1,0 +1,10 @@
+<job id = "abc">
+<script language = "VBScript">
+Option Explicit
+
+msgbox "aa",,"test.wsf"
+
+
+</script>
+</job>
+

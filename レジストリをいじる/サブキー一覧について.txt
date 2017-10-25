@@ -1,0 +1,24 @@
+サブキー一覧は、取得できない！
+なので2006/11頃のMemsONEでは、
+windowsのコマンドreg exportでテキストファイル出力させて
+その中を検索した。
+
+[参考]
+REGコマンド シリーズ
+
+REG QUERY /?
+REG ADD /?
+REG DELETE /?
+REG COPY /?
+REG SAVE /?
+REG RESTORE /?
+REG LOAD /?
+REG UNLOAD /?
+REG COMPARE /?
+REG EXPORT /?
+REG IMPORT /?
+
+今日は削除したかったので、、
+REG DELETE "HKCU\Software\Nihon Unisys Excelutions\MemsONE" /f
+で確認OK。
+

@@ -1,0 +1,3 @@
+Option Explicit
+
+MsgBox "â¸" & vbCrLf & "çs" & vbCrLf & "Å`" & vbCrLf & "Åö"

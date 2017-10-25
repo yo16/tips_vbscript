@@ -1,0 +1,10 @@
+<job id="aaa">
+<script language="VBScript">
+
+Function mySum(param_A,param_B)
+	mySum = param_A + param_B
+End Function
+
+</script>
+</job>
+

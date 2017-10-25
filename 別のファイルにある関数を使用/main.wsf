@@ -1,0 +1,9 @@
+<job id="abc">
+<script language="xml" src="rtnFunc.wsf"></script>
+
+<script language="vbscript">
+msgbox mySum(10,20)
+</script>
+
+
+</job>

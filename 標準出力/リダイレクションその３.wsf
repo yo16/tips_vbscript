@@ -1,0 +1,17 @@
+<JOB id="RedirectionPrac">
+<SCRIPT language="VBScript">
+
+Option Explicit
+
+MsgBox "リダイレクションその３開始!"
+WScript.Echo "リダイレクションその３ =開始="
+
+
+WScript.Echo "リダイレクションその３ =終了="
+MsgBox "リダイレクションその３終了!"
+
+</SCRIPT>
+</JOB>
+
+
+
