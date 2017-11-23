@@ -1,24 +1,33 @@
-' é…åˆ—ã‚’é–¢æ•°ã¸æ¸¡ã™
+' ”z—ñ‚ğŠÖ”‚Ö“n‚·
 
 Option Explicit
 
 
-' é…åˆ—å®šç¾©
+' ”z—ñ’è‹`
 Dim array1
-array1 = Array("a","b","c")		'Arrayé–¢æ•°ã‚’ä½¿ç”¨
+array1 = Array("a","b","c")		'ArrayŠÖ”‚ğg—p
 
-' å‘¼ã¶
-test(array1)
+' ŒÄ‚Ô
+test array1
+
+test2 array1
+msgbox array1(1)
+' ¨ X
+' •ÏX‚³‚ê‚Ä‚¢‚é
 
 
-' é–¢æ•°å®šç¾©
+' ŠÖ”’è‹`
 Sub test(pArray)
-	' æ•°ã‚’æ•°ãˆã¦ã¿ã‚‹
+	' ”‚ğ”‚¦‚Ä‚İ‚é
 	msgbox UBound(pArray), vbOkOnly, "UBound(array)"
-	' â†’ 2
+	' ¨ 2
 	
-	' å‡ºåŠ›ã—ã¦ã¿ã‚‹
+	' o—Í‚µ‚Ä‚İ‚é
 	msgbox pArray(0) & "-" & pArray(1) & "-" & pArray(2), vbOkOnly, "elements"
-	' â†’ a-b-c
+	' ¨ a-b-c
 End Sub
 
+' ByRef‚Åó‚¯æ‚Á‚Ä•ÏX
+Sub test2(ByRef pArray)
+	pArray(1) = "X"
+End Sub
