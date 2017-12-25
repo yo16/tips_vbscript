@@ -1,6 +1,6 @@
 Option Explicit
 ' ファイルの先頭数byteを出力
-' 2017 (c) y.ikeda
+' 2017 (c) yo16
 
 Dim vbsTitle : vbsTitle = "head extract"
 

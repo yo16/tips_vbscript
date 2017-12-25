@@ -1,5 +1,5 @@
 ' ShiftJISのファイルをUTF-8へ変換
-' 2017/3/7 (c) y.ikeda
+' 2017/3/7 (c) yo16
 ' 文字が長いとだめかも？
 
 Option Explicit

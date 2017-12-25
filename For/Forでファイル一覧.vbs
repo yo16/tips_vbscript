@@ -1,5 +1,5 @@
 ' for‚Åƒtƒ@ƒCƒ‹ˆê——
-' 2016/10/10 y.ikeda
+' 2016/10/10 yo16
 
 Option Explicit
 

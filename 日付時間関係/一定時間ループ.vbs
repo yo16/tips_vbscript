@@ -1,7 +1,7 @@
 Option Explicit
 
 ' 特定の処理を定期的に回す処理
-' 2017/2/22 (c) y.ikeda
+' 2017/2/22 (c) yo16
 
 ' 呼び出し間隔（分）
 Dim intervalTime : intervalTime = 60

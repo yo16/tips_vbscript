@@ -1,7 +1,7 @@
 Option Explicit
 
 ' フォルダをコピー
-' 2016/1/22 y.ikeda
+' 2016/1/22 yo16
 
 Dim objFs
 Set objFs = WScript.CreateObject("Scripting.FileSystemObject")

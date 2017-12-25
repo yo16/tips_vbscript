@@ -1,4 +1,4 @@
-2015/1/10 y.ikeda
+2015/1/10 yo16
 
 VBScriptからADODB.Connectionを利用することはできないが、wsfなら参照できる。
 referenceタグで定義しておくと、CreateObjectで指示できる。<reference object="ADODB.Connection" />

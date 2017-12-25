@@ -1,5 +1,5 @@
 ' AllUserのデスクトップにショートカットを作成
-' 2016/3/15 y.ikeda
+' 2016/3/15 yo16
 
 
 Option Explicit

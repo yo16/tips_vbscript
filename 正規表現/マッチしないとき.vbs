@@ -1,7 +1,7 @@
 Option Explicit
 
 ' ƒ}ƒbƒ`‚µ‚È‚¢‚Æ‚«
-' 2017/11/28 y.ikeda
+' 2017/11/28 yo16
 
 Dim str
 str = "aabbcc"

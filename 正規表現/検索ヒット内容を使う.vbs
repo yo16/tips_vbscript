@@ -1,5 +1,5 @@
 ' ij‚Æ‚©g‚Á‚Ä‚İ‚½‚è
-' 2008/12/02 y.ikeda
+' 2008/12/02 yo16
 
 Dim strTest
 strTest = "abbbcccddddd"

@@ -1,6 +1,6 @@
 Option Explicit
 ' ファイル名を変更する
-' 2008/01/16 y.ikeda
+' 2008/01/16 yo16
 
 
 ' MoveFileを使う

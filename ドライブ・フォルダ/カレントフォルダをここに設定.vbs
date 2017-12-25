@@ -1,5 +1,5 @@
 ' カレントフォルダを、このスクリプトが置いてあるフォルダへ変更
-' 2017/03/03 (c) y.ikeda
+' 2017/03/03 (c) yo16
 
 Dim objFS,objFolder
 Set objFS = CreateObject("Scripting.FileSystemObject")

@@ -1,5 +1,5 @@
 ' ”z—ñ‚É”z—ñ‚ð“ü‚ê‚é
-' 2016/9/16 y.ikeda
+' 2016/9/16 yo16
 Option Explicit
 
 Dim ary(2)

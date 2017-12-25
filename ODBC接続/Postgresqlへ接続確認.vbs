@@ -1,5 +1,5 @@
 ' ODBCê⁄ë±Ç≈SPOOL
-' 2017/2/21 (c) y.ikeda
+' 2017/2/21 (c) yo16
 
 Option Explicit
 

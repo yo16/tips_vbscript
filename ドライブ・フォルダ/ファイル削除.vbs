@@ -1,5 +1,5 @@
 ' ƒtƒ@ƒCƒ‹‚ğì‚Á‚ÄÁ‚·
-' 2016/5/12 y.ikeda
+' 2016/5/12 yo16
 
 Option Explicit
 
